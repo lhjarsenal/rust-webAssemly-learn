@@ -34,13 +34,34 @@ canvas.width = (CELL_SIZE + 1) * width + 1;
 
 const ctx = canvas.getContext('2d');
 
+let animationId = null;
+
 function renderLoop() {
-    debugger; //添加调试器
-    universe.tick();
+    //debugger; //添加调试器
     drawGrid();
     drawCells();
-    window.requestAnimationFrame(renderLoop);
+    universe.tick();
+    //window.requestAnimationFrame(renderLoop);
+    animationId = requestAnimationFrame(renderLoop);
 }
+
+function isPaused() {
+    return animationId === null;
+}
+
+const playPauseButton = document.getElementById("play-pause");
+
+function play() {
+    playPauseButton.textContent = "⏸";
+    renderLoop();
+}
+
+function pause() {
+    playPauseButton.textContent = "▶️";
+    cancelAnimationFrame(animationId);
+    animationId = null;
+}
+
 
 function drawGrid() {
     ctx.beginPath();
@@ -85,3 +106,29 @@ function drawCells() {
 }
 
 window.requestAnimationFrame(renderLoop);
+
+playPauseButton.addEventListener("click", function () {
+    if (isPaused()) {
+        play();
+    } else {
+        pause();
+    }
+});
+
+canvas.addEventListener("click", function () {
+    const boundingRect = canvas.getBoundingClientRect();
+
+    const scaleX = canvas.width / boundingRect.width;
+    const scaleY = canvas.height / boundingRect.height;
+
+    const canvasLeft = (event.clientX - boundingRect.left) * scaleX;
+    const canvasTop = (event.clientY - boundingRect.top) * scaleY;
+
+    const row = Math.min(Math.floor(canvasTop / (CELL_SIZE + 1)), height - 1);
+    const col = Math.min(Math.floor(canvasLeft / (CELL_SIZE + 1)), width - 1);
+
+    universe.toggle_cell(row, col);
+
+    drawGrid();
+    drawCells();
+});
